@@ -4,24 +4,18 @@ const srcPath = path.join(__dirname, 'styles');
 const destPath = path.join(__dirname, 'project-dist', 'bundle.css');
 
 
-async function getBundle() {
-  await fs.writeFile(destPath, '', () => console.log('gotovo!'));
+(async () => {
+  const files = await fs.promises.readdir(srcPath, { withFileTypes: true });
+  const filesCss = files
+    .filter(file => file.isFile())
+    .filter(file => path.extname(file.name) === '.css');
 
-  const files = await fs.promises.readdir(srcPath, {withFileTypes: true});
+  const output = fs.createWriteStream(destPath);
 
-  for (const file of files) {
-    if (file.isFile() && path.extname(`${file.name}`) === '.css') {
+  for (let file of filesCss) {
+    const srcFilePath = path.join(srcPath, file.name);
+    const input = fs.createReadStream(srcFilePath);
 
-      const srcFilePath = path.join(srcPath, file.name);
-      const input = fs.createReadStream(srcFilePath, 'utf-8');
-
-      input.on('data', (data) => {
-        fs.appendFile(destPath, data, err => {
-          if (err) throw err;
-        });
-      });
-    }
+    input.pipe(output);
   }
-}
-
-getBundle();
+})();

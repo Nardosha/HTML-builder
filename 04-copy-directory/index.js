@@ -1,30 +1,28 @@
 const fs = require('fs');
-const fsPromises = require('node:fs/promises');
 const path = require('path');
 
 const destDir = path.join(__dirname, 'files-copy');
 const srcDir = path.join(__dirname, 'files');
 
-async function makeFolder() {
-  await fsPromises.mkdir(destDir, {recursive: true});
+(async () => {
+  await fs.promises.rm(destDir, { recursive: true, force: true });
+  await fs.promises.mkdir(destDir, { recursive: true });
+  const copyFiles = await fs.promises.readdir(srcDir, { withFileTypes: true });
+  const files = copyFiles.filter(file => file.isFile());
 
-  const files = await fsPromises.readdir(srcDir, {withFileTypes: true});
-
-  for (const file of files) {
-    const copyFileName = `copy-${file.name}`;
+  for (let file of files) {
     const srcPath = path.join(srcDir, file.name);
-    const destPath = path.join(destDir, copyFileName);
+    const destPath = path.join(destDir, file.name);
 
-    fs.copyFile(srcPath, destPath, err => console.log(err));
-    checkUpdate(srcPath, destPath);
+    await fs.promises.copyFile(srcPath, destPath);
+    // checkUpdate(srcPath, destPath);
   }
-}
-makeFolder();
+})();
 
-function checkUpdate(pathSrc, destPath) {
-  const input = fs.createReadStream(pathSrc, 'utf-8');
-  const out = fs.createWriteStream(destPath);
-
-  input.pipe(out);
-}
+// function checkUpdate(pathSrc, destPath) {
+//   const input = fs.createReadStream(pathSrc, 'utf-8');
+//   const out = fs.createWriteStream(destPath);
+//
+//   input.pipe(out);
+// }
 
